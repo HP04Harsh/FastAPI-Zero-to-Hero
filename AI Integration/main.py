@@ -1,14 +1,23 @@
 import io
 import base64
+import json
+import os
 from PIL import Image
-from fastapi import FastAPI, UploadFile, File
+from fastapi import FastAPI, UploadFile, File, HTTPException
 from groq import Groq
 
 app = FastAPI()
-groq_client = Groq(api_key="your_groq_api_key")
+groq_api_key = os.getenv("GROQ_API_KEY")
+groq_client = Groq(api_key=groq_api_key) if groq_api_key else None
 
 @app.post("/ai/vision-analyze")
 async def analyze_crop_photo(file: UploadFile = File(...)):
+    if groq_client is None:
+        raise HTTPException(
+            status_code=503,
+            detail="GROQ_API_KEY is not configured.",
+        )
+
     # Step 1: Read Bytes
     contents = await file.read()
 
